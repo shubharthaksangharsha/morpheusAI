@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
   Box, 
   Grid, 
@@ -11,7 +11,11 @@ import {
   useTheme,
   useMediaQuery,
   Tabs,
-  Tab
+  Tab,
+  Button,
+  Tooltip,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import InfoIcon from '@mui/icons-material/Info';
@@ -26,6 +30,8 @@ import CodeIcon from '@mui/icons-material/Code';
 import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
 import BuildIcon from '@mui/icons-material/Build';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import PersonIcon from '@mui/icons-material/Person';
 import UserWindow from '../windows/UserWindow';
 import TerminalWindow from '../windows/TerminalWindow';
 import WebWindow from '../windows/WebWindow';
@@ -140,6 +146,15 @@ const StyledTab = styled(Tab)(({ theme }) => ({
   fontWeight: 500,
 }));
 
+// Add new styled components for the user control button
+const UserControlButton = styled(Button)(({ theme }) => ({
+  position: 'absolute',
+  right: theme.spacing(2),
+  top: theme.spacing(2),
+  zIndex: 1000,
+  textTransform: 'none',
+}));
+
 interface MorpheusLayoutProps {
   toggleDarkMode?: () => void;
   isDarkMode?: boolean;
@@ -150,6 +165,9 @@ const MorpheusLayout: React.FC<MorpheusLayoutProps> = ({ toggleDarkMode, isDarkM
   const [notifications, setNotifications] = useState(true);
   const [autoSave, setAutoSave] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
+  const [userControlled, setUserControlled] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
   
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -169,6 +187,23 @@ const MorpheusLayout: React.FC<MorpheusLayoutProps> = ({ toggleDarkMode, isDarkM
   
   const handleAutoSaveToggle = () => {
     setAutoSave(!autoSave);
+  };
+
+  const toggleUserControl = useCallback(() => {
+    const newState = !userControlled;
+    setUserControlled(newState);
+    
+    // Show notification when control changes
+    if (newState) {
+      setSnackbarMessage("You now have control of all tools");
+    } else {
+      setSnackbarMessage("Agent has regained control of tools");
+    }
+    setSnackbarOpen(true);
+  }, [userControlled]);
+  
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
   };
   
   return (
@@ -261,6 +296,25 @@ const MorpheusLayout: React.FC<MorpheusLayoutProps> = ({ toggleDarkMode, isDarkM
                 }
               />
             </SettingItem>
+            
+            {/* Add user control toggle */}
+            <SettingItem>
+              <FormControlLabel
+                control={
+                  <Switch 
+                    size="small" 
+                    checked={userControlled} 
+                    onChange={toggleUserControl}
+                  />
+                }
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    {userControlled ? <PersonIcon fontSize="small" /> : <AdminPanelSettingsIcon fontSize="small" />}
+                    <Typography variant="body2">User Control</Typography>
+                  </Box>
+                }
+              />
+            </SettingItem>
           </SettingsSection>
         </LeftPane>
         
@@ -283,15 +337,32 @@ const MorpheusLayout: React.FC<MorpheusLayoutProps> = ({ toggleDarkMode, isDarkM
           </TabsContainer>
           
           <WindowContainer>
-            {activeTab === 0 && <TerminalWindow />}
-            {activeTab === 1 && <WebWindow />}
-            {activeTab === 2 && <EditorWindow />}
-            {activeTab === 3 && <PlanWindow />}
-            {activeTab === 4 && <ToolWindow />}
-            {activeTab === 5 && <PreviewWindow />}
+            {activeTab === 0 && <TerminalWindow agentOnly={!userControlled} />}
+            {activeTab === 1 && <WebWindow agentOnly={!userControlled} />}
+            {activeTab === 2 && <EditorWindow agentOnly={!userControlled} />}
+            {activeTab === 3 && <PlanWindow agentOnly={!userControlled} />}
+            {activeTab === 4 && <ToolWindow agentOnly={!userControlled} />}
+            {activeTab === 5 && <PreviewWindow agentOnly={!userControlled} />}
           </WindowContainer>
         </RightPane>
       </MainContent>
+      
+      {/* Add snackbar notification */}
+      <Snackbar 
+        open={snackbarOpen} 
+        autoHideDuration={4000} 
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={userControlled ? "warning" : "info"} 
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </LayoutContainer>
   );
 };

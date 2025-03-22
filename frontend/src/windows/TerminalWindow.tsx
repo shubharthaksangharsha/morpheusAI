@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box, TextField, Typography, styled, IconButton, Paper, Tooltip } from '@mui/material';
+import { Box, TextField, Typography, styled, IconButton, Paper, Tooltip, Button } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import CheckIcon from '@mui/icons-material/Check';
 import DownloadIcon from '@mui/icons-material/Download';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import LockIcon from '@mui/icons-material/Lock';
 
 // Styled components
 const TerminalContainer = styled(Box)(({ theme }) => ({
@@ -142,15 +144,15 @@ interface TerminalCommand {
 }
 
 interface TerminalWindowProps {
-  initialCommands?: TerminalCommand[];
   agentOnly?: boolean;
+  onTakeControl?: () => void;
 }
 
 const TerminalWindow: React.FC<TerminalWindowProps> = ({ 
-  initialCommands = [],
-  agentOnly = true
+  agentOnly = true,
+  onTakeControl
 }) => {
-  const [commands, setCommands] = useState<TerminalCommand[]>(initialCommands);
+  const [commands, setCommands] = useState<TerminalCommand[]>([]);
   const [currentInput, setCurrentInput] = useState('');
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -311,7 +313,7 @@ const TerminalWindow: React.FC<TerminalWindowProps> = ({
             </IconButton>
           </Tooltip>
           <Tooltip title="Clear terminal">
-            <IconButton size="small" onClick={clearTerminal}>
+            <IconButton size="small" onClick={clearTerminal} disabled={agentOnly}>
               <ClearAllIcon fontSize="small" />
             </IconButton>
           </Tooltip>

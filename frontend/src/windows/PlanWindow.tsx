@@ -137,9 +137,11 @@ interface Task {
   tags: string[];
 }
 
-interface PlanWindowProps {}
+interface PlanWindowProps {
+  agentOnly?: boolean;
+}
 
-const PlanWindow: React.FC<PlanWindowProps> = () => {
+const PlanWindow: React.FC<PlanWindowProps> = ({ agentOnly = true }) => {
   const [tasks, setTasks] = useState<Task[]>([
     {
       id: '1',
@@ -292,6 +294,11 @@ const PlanWindow: React.FC<PlanWindowProps> = () => {
           <Typography variant="body2" sx={{ fontWeight: 500 }}>Planner</Typography>
         </PlanTitle>
         <PlanActions>
+          {agentOnly && (
+            <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
+              Agent-controlled
+            </Typography>
+          )}
           <Tooltip title="Filter tasks">
             <IconButton 
               size="small" 

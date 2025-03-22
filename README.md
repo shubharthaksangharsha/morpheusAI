@@ -31,7 +31,10 @@ The frontend is built with React, TypeScript, and Material-UI, providing a clean
   - Task Planner
   - Tool Selection
   - Content Preview
+- **User Control Mode**: Toggle to take manual control of any tool when needed
 - Responsive design with dark mode support
+
+For detailed information about the frontend, see the [Frontend README](frontend/README.md).
 
 ## Backend (In Progress)
 
@@ -41,6 +44,8 @@ The backend is currently under development and will include:
 - API services for all tool functionalities
 - Authentication and user data management
 - WebSocket communication for real-time updates
+
+For planned backend features, see the [Backend README](backend/README.md).
 
 ## Getting Started
 
@@ -68,6 +73,19 @@ The backend is currently under development and will include:
 - Node.js (v14 or higher)
 - npm or yarn
 - Modern web browser
+
+## Key Features
+
+### Agent-Controlled Tools
+Morpheus AI provides various specialized tools that are primarily controlled by the AI agent, allowing for a seamless experience where the AI can perform complex tasks on your behalf.
+
+### User Control Toggle
+While the tools are normally agent-controlled, you can easily take manual control at any time:
+- Toggle the "User Control" switch in the settings panel
+- Interact directly with any tool
+- Return control to the AI when desired
+
+This gives you the flexibility to let the AI handle most tasks while being able to intervene whenever you need more direct control.
 
 ## Contributing
 

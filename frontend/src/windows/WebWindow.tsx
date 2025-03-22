@@ -81,7 +81,7 @@ const WebBrowserFrame = styled('iframe')({
 
 interface WebWindowProps {
   initialUrl?: string;
-  agentOnly?: boolean; // Add prop to control access
+  agentOnly?: boolean;
 }
 
 const WebWindow: React.FC<WebWindowProps> = ({ 
@@ -100,9 +100,8 @@ const WebWindow: React.FC<WebWindowProps> = ({
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (agentOnly) return;
-    
-    if (e.key === 'Enter') {
+    if (!agentOnly && e.key === 'Enter') {
+      e.preventDefault();
       navigateToUrl();
     }
   };
@@ -164,17 +163,7 @@ const WebWindow: React.FC<WebWindowProps> = ({
               Agent-controlled
             </Typography>
           )}
-          <Tooltip title="Home">
-            <IconButton size="small" onClick={navigateToHome}>
-              <HomeIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Refresh">
-            <IconButton size="small" onClick={refreshPage} disabled={!currentUrl}>
-              <RefreshIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="About this browser">
+          <Tooltip title="View page info">
             <IconButton size="small">
               <InfoOutlinedIcon fontSize="small" />
             </IconButton>
@@ -183,33 +172,35 @@ const WebWindow: React.FC<WebWindowProps> = ({
       </WindowHeader>
       
       <AddressBar>
+        <IconButton 
+          size="small" 
+          onClick={navigateToHome}
+          disabled={agentOnly}
+        >
+          <HomeIcon fontSize="small" />
+        </IconButton>
+        <IconButton 
+          size="small" 
+          onClick={refreshPage}
+          disabled={agentOnly}
+        >
+          <RefreshIcon fontSize="small" />
+        </IconButton>
         <StyledTextField
           fullWidth
           size="small"
-          placeholder="Enter URL or search term..."
+          placeholder="Enter a URL or search term"
           value={url}
           onChange={handleUrlChange}
-          onKeyDown={handleKeyPress}
+          onKeyPress={handleKeyPress}
           disabled={agentOnly}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon fontSize="small" color="action" />
+                <SearchIcon fontSize="small" />
               </InputAdornment>
             ),
-            endAdornment: !agentOnly && (
-              <InputAdornment position="end">
-                <IconButton 
-                  size="small" 
-                  onClick={navigateToUrl}
-                  disabled={!url}
-                >
-                  <SearchIcon fontSize="small" />
-                </IconButton>
-              </InputAdornment>
-            )
           }}
-          inputRef={inputRef}
         />
       </AddressBar>
       
@@ -238,10 +229,10 @@ const WebWindow: React.FC<WebWindowProps> = ({
   );
 };
 
-// Add method to allow agent to control the browser
-(WebWindow as any).navigate = (webWindowRef: any, url: string) => {
-  if (webWindowRef.current && typeof webWindowRef.current.navigate === 'function') {
-    webWindowRef.current.navigate(url);
+// Add public method for the agent to navigate
+(WebWindow as any).navigate = (webRef: any, url: string) => {
+  if (webRef.current && typeof webRef.current.navigate === 'function') {
+    webRef.current.navigate(url);
   }
 };
 

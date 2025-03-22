@@ -14,6 +14,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import SearchIcon from '@mui/icons-material/Search';
 import SettingsIcon from '@mui/icons-material/Settings';
 import NewFolderIcon from '@mui/icons-material/CreateNewFolder';
+import { useTheme } from '@mui/material/styles';
 
 // Styled components
 const EditorContainer = styled(Box)(({ theme }) => ({
@@ -216,15 +217,34 @@ const EditorArea = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.background.default,
 }));
 
-const CodeBlock = styled('pre')(({ theme }) => ({
-  margin: 0,
-  padding: theme.spacing(1),
+const CodeBlock = styled(Box, {
+  shouldForwardProp: prop => prop !== 'readOnly'
+})<{ readOnly?: boolean }>(({ theme, readOnly }) => ({
   fontFamily: '"Fira Code", monospace',
   fontSize: '0.875rem',
-  lineHeight: 1.5,
-  overflowX: 'auto',
+  padding: theme.spacing(1.5),
   backgroundColor: theme.palette.background.default,
-  color: theme.palette.text.primary,
+  borderRadius: theme.shape.borderRadius,
+  overflowX: 'auto',
+  whiteSpace: 'pre',
+  outline: 'none',
+  border: readOnly ? 'none' : `1px solid ${theme.palette.divider}`,
+  cursor: readOnly ? 'default' : 'text',
+}));
+
+const CodeEditor = styled(TextField)(({ theme }) => ({
+  '.MuiInputBase-root': {
+    fontFamily: '"Fira Code", monospace',
+    fontSize: '0.875rem',
+    padding: 0,
+  },
+  '.MuiOutlinedInput-notchedOutline': {
+    border: 'none',
+  },
+  '.MuiInputBase-input': {
+    padding: theme.spacing(1.5),
+    lineHeight: 1.5,
+  },
 }));
 
 // Mock file system data
@@ -583,9 +603,13 @@ interface TabData {
   language: string;
 }
 
-interface EditorWindowProps {}
+interface EditorWindowProps {
+  agentOnly?: boolean;
+}
 
-const EditorWindow: React.FC<EditorWindowProps> = () => {
+const EditorWindow: React.FC<EditorWindowProps> = ({ agentOnly = true }) => {
+  const theme = useTheme();
+  
   const [openTabs, setOpenTabs] = useState<TabData[]>([]);
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [activeFile, setActiveFile] = useState<string | null>(null);
@@ -595,6 +619,8 @@ const EditorWindow: React.FC<EditorWindowProps> = () => {
   const [newFileName, setNewFileName] = useState('');
   const [newFileType, setNewFileType] = useState('file');
   const [newFileLanguage, setNewFileLanguage] = useState('typescript');
+  
+  const [editedContent, setEditedContent] = useState<{[key: string]: string}>({});
   
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
@@ -749,6 +775,18 @@ const EditorWindow: React.FC<EditorWindowProps> = () => {
   
   const activeTabData = openTabs.find(tab => tab.id === activeTab) || null;
   
+  const handleContentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (activeTab) {
+      const newEditedContent = { ...editedContent };
+      newEditedContent[activeTab] = event.target.value;
+      setEditedContent(newEditedContent);
+    }
+  };
+  
+  const getCurrentContent = (tabId: string, originalContent: string) => {
+    return editedContent[tabId] !== undefined ? editedContent[tabId] : originalContent;
+  };
+  
   return (
     <EditorContainer>
       <EditorHeader>
@@ -757,6 +795,11 @@ const EditorWindow: React.FC<EditorWindowProps> = () => {
           <Typography variant="body2" sx={{ fontWeight: 500 }}>Code Editor</Typography>
         </EditorTitle>
         <EditorActions>
+          {agentOnly && (
+            <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
+              Agent-controlled
+            </Typography>
+          )}
           <Tooltip title="Run code">
             <IconButton size="small" color="primary">
               <PlayArrowIcon fontSize="small" />
@@ -785,7 +828,11 @@ const EditorWindow: React.FC<EditorWindowProps> = () => {
           <FilesPaneHeader>
             <Typography variant="body2" sx={{ fontWeight: 500 }}>Explorer</Typography>
             <Tooltip title="New file or folder">
-              <IconButton size="small" onClick={handleNewFileOpen}>
+              <IconButton 
+                size="small" 
+                onClick={handleNewFileOpen}
+                disabled={agentOnly}
+              >
                 <AddIcon fontSize="small" />
               </IconButton>
             </Tooltip>
@@ -797,6 +844,7 @@ const EditorWindow: React.FC<EditorWindowProps> = () => {
             fullWidth
             value={searchQuery}
             onChange={handleSearchChange}
+            disabled={agentOnly}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -855,7 +903,24 @@ const EditorWindow: React.FC<EditorWindowProps> = () => {
           
           <EditorArea>
             {activeTabData ? (
-              <CodeBlock>{activeTabData.content}</CodeBlock>
+              agentOnly ? (
+                <CodeBlock readOnly>{activeTabData.content}</CodeBlock>
+              ) : (
+                <CodeEditor
+                  fullWidth
+                  multiline
+                  variant="outlined"
+                  value={getCurrentContent(activeTabData.id, activeTabData.content)}
+                  onChange={handleContentChange}
+                  InputProps={{
+                    style: { 
+                      fontFamily: '"Fira Code", monospace',
+                      fontSize: '0.875rem',
+                      backgroundColor: theme.palette.background.default,
+                    }
+                  }}
+                />
+              )
             ) : (
               <Box 
                 sx={{ 
@@ -879,6 +944,7 @@ const EditorWindow: React.FC<EditorWindowProps> = () => {
                   startIcon={<AddIcon />} 
                   size="small"
                   onClick={handleNewFileOpen}
+                  disabled={agentOnly}
                 >
                   Create New File
                 </Button>
@@ -891,16 +957,20 @@ const EditorWindow: React.FC<EditorWindowProps> = () => {
               {activeTabData && (
                 <>
                   <Typography component="span" variant="caption">
-                    Lines: {activeTabData.content.split('\n').length}
+                    Lines: {(activeTab && editedContent[activeTab] 
+                      ? editedContent[activeTab].split('\n').length 
+                      : activeTabData.content.split('\n').length)}
                   </Typography>
                   <Typography component="span" variant="caption" sx={{ ml: 2 }}>
-                    Characters: {activeTabData.content.length}
+                    Characters: {(activeTab && editedContent[activeTab] 
+                      ? editedContent[activeTab].length 
+                      : activeTabData.content.length)}
                   </Typography>
                 </>
               )}
             </Box>
             <Typography variant="caption" color="text.secondary">
-              UTF-8
+              {agentOnly ? "Read Only" : "Editing"} | UTF-8
             </Typography>
           </StatusBar>
         </MainEditor>

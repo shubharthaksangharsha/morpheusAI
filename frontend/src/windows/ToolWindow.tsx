@@ -154,9 +154,11 @@ interface Tool {
   category: 'ai' | 'data' | 'media' | 'dev';
 }
 
-interface ToolWindowProps {}
+interface ToolWindowProps {
+  agentOnly?: boolean;
+}
 
-const ToolWindow: React.FC<ToolWindowProps> = () => {
+const ToolWindow: React.FC<ToolWindowProps> = ({ agentOnly = true }) => {
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
   const [toolStatus, setToolStatus] = useState<'idle' | 'running' | 'error' | 'success'>('idle');
   const [toolOutput, setToolOutput] = useState<string | null>(null);
@@ -288,13 +290,18 @@ const ToolWindow: React.FC<ToolWindowProps> = () => {
           <Typography variant="body2" sx={{ fontWeight: 500 }}>AI Tools</Typography>
         </ToolsTitle>
         <ToolsActions>
+          {agentOnly && (
+            <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
+              Agent-controlled
+            </Typography>
+          )}
           <Tooltip title="Run tool">
             <span> {/* Wrapper to handle disabled state with tooltip */}
               <IconButton 
                 size="small" 
                 color="primary"
                 onClick={handleRunTool}
-                disabled={!activeTool || toolStatus === 'running'}
+                disabled={!activeTool || toolStatus === 'running' || agentOnly}
               >
                 <PlayArrowIcon fontSize="small" />
               </IconButton>
@@ -306,7 +313,7 @@ const ToolWindow: React.FC<ToolWindowProps> = () => {
                 size="small" 
                 color="error"
                 onClick={handleStopTool}
-                disabled={toolStatus !== 'running'}
+                disabled={toolStatus !== 'running' || agentOnly}
               >
                 <StopIcon fontSize="small" />
               </IconButton>
@@ -317,7 +324,7 @@ const ToolWindow: React.FC<ToolWindowProps> = () => {
               <IconButton 
                 size="small"
                 onClick={handleResetTool}
-                disabled={!activeTool || toolStatus === 'running' || (!toolOutput && toolStatus === 'idle')}
+                disabled={!activeTool || toolStatus === 'running' || (!toolOutput && toolStatus === 'idle') || agentOnly}
               >
                 <RefreshIcon fontSize="small" />
               </IconButton>

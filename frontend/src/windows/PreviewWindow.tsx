@@ -285,9 +285,11 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ item }) => {
   );
 };
 
-interface PreviewWindowProps {}
+interface PreviewWindowProps {
+  agentOnly?: boolean;
+}
 
-const PreviewWindow: React.FC<PreviewWindowProps> = () => {
+const PreviewWindow: React.FC<PreviewWindowProps> = ({ agentOnly = true }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [zoomLevel, setZoomLevel] = useState(100);
   
@@ -315,6 +317,11 @@ const PreviewWindow: React.FC<PreviewWindowProps> = () => {
           <Typography variant="body2" sx={{ fontWeight: 500 }}>Preview</Typography>
         </PreviewTitle>
         <PreviewActions>
+          {agentOnly && (
+            <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
+              Agent-controlled
+            </Typography>
+          )}
           <Tooltip title="Zoom in">
             <IconButton size="small" onClick={handleZoomIn}>
               <ZoomInIcon fontSize="small" />
