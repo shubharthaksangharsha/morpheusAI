@@ -2,7 +2,7 @@
 
 A versatile AI assistant platform with a modern interface and multiple integrated tools, all controlled by an intelligent agent.
 
-![Image](outputs/preview-morpheus.png)
+![Image](outputs/morpheus-preview-window.png)
 
 ## Project Overview
 
