@@ -1,0 +1,334 @@
+Use the generateContent method to send a request to the Gemini API.
+
+
+Text:
+
+// Make sure to include these imports:
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+const prompt = "Write a story about a magic backpack.";
+
+const result = await model.generateContent(prompt);
+console.log(result.response.text());
+
+Image:
+
+// Make sure to include these imports:
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+function fileToGenerativePart(path, mimeType) {
+  return {
+    inlineData: {
+      data: Buffer.from(fs.readFileSync(path)).toString("base64"),
+      mimeType,
+    },
+  };
+}
+
+const prompt = "Describe how this product might be manufactured.";
+// Note: The only accepted mime types are some image types, image/*.
+const imagePart = fileToGenerativePart(
+  `${mediaPath}/jetpack.jpg`,
+  "image/jpeg",
+);
+
+const result = await model.generateContent([prompt, imagePart]);
+console.log(result.response.text());
+
+Audio
+// Make sure to include these imports:
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+function fileToGenerativePart(path, mimeType) {
+  return {
+    inlineData: {
+      data: Buffer.from(fs.readFileSync(path)).toString("base64"),
+      mimeType,
+    },
+  };
+}
+
+const prompt = "Give me a summary of this audio file.";
+// Note: The only accepted mime types are some image types, image/*.
+const audioPart = fileToGenerativePart(
+  `${mediaPath}/samplesmall.mp3`,
+  "audio/mp3",
+);
+
+const result = await model.generateContent([prompt, audioPart]);
+console.log(result.response.text());
+
+Video:
+
+// Make sure to include these imports:
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+// import { GoogleAIFileManager, FileState } from "@google/generative-ai/server";
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+const fileManager = new GoogleAIFileManager(process.env.API_KEY);
+
+const uploadResult = await fileManager.uploadFile(
+  `${mediaPath}/Big_Buck_Bunny.mp4`,
+  { mimeType: "video/mp4" },
+);
+
+let file = await fileManager.getFile(uploadResult.file.name);
+while (file.state === FileState.PROCESSING) {
+  process.stdout.write(".");
+  // Sleep for 10 seconds
+  await new Promise((resolve) => setTimeout(resolve, 10_000));
+  // Fetch the file from the API again
+  file = await fileManager.getFile(uploadResult.file.name);
+}
+
+if (file.state === FileState.FAILED) {
+  throw new Error("Video processing failed.");
+}
+
+const prompt = "Describe this video clip";
+const videoPart = {
+  fileData: {
+    fileUri: uploadResult.file.uri,
+    mimeType: uploadResult.file.mimeType,
+  },
+};
+
+const result = await model.generateContent([prompt, videoPart]);
+console.log(result.response.text());
+
+Chat
+// Make sure to include these imports:
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const chat = model.startChat({
+  history: [
+    {
+      role: "user",
+      parts: [{ text: "Hello" }],
+    },
+    {
+      role: "model",
+      parts: [{ text: "Great to meet you. What would you like to know?" }],
+    },
+  ],
+});
+let result = await chat.sendMessage("I have 2 dogs in my house.");
+console.log(result.response.text());
+result = await chat.sendMessage("How many paws are in my house?");
+console.log(result.response.text());
+
+PDF
+
+Cache 
+
+// Make sure to include these imports:
+// import { GoogleAICacheManager, GoogleAIFileManager } from "@google/generative-ai/server";
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+const cacheManager = new GoogleAICacheManager(process.env.API_KEY);
+const fileManager = new GoogleAIFileManager(process.env.API_KEY);
+
+const uploadResult = await fileManager.uploadFile(`${mediaPath}/a11.txt`, {
+  mimeType: "text/plain",
+});
+
+const cacheResult = await cacheManager.create({
+  model: "models/gemini-1.5-flash-001",
+  contents: [
+    {
+      role: "user",
+      parts: [
+        {
+          fileData: {
+            fileUri: uploadResult.file.uri,
+            mimeType: uploadResult.file.mimeType,
+          },
+        },
+      ],
+    },
+  ],
+});
+
+console.log(cacheResult);
+
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const model = genAI.getGenerativeModelFromCachedContent(cacheResult);
+const result = await model.generateContent(
+  "Please summarize this transcript.",
+);
+console.log(result.response.text());
+
+systemInstruction:
+
+// Make sure to include these imports:
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const model = genAI.getGenerativeModel({
+  model: "gemini-1.5-flash",
+  systemInstruction: "You are a cat. Your name is Neko.",
+});
+
+const prompt = "Good morning! How are you?";
+
+const result = await model.generateContent(prompt);
+const response = result.response;
+const text = response.text();
+console.log(text);
+
+SafetySetting:
+
+// Make sure to include these imports:
+// import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const model = genAI.getGenerativeModel({
+  model: "gemini-1.5-flash",
+  safetySettings: [
+    {
+      category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+      threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    },
+    {
+      category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+      threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+    },
+  ],
+});
+
+const unsafePrompt =
+  "I support Martians Soccer Club and I think " +
+  "Jupiterians Football Club sucks! Write an ironic phrase telling " +
+  "them how I feel about them.";
+
+const result = await model.generateContent(unsafePrompt);
+
+try {
+  result.response.text();
+} catch (e) {
+  console.error(e);
+  console.log(result.response.candidates[0].safetyRatings);
+}
+
+
+GenerationConfig:
+
+// Make sure to include these imports:
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const model = genAI.getGenerativeModel({
+  model: "gemini-1.5-flash",
+  generationConfig: {
+    candidateCount: 1,
+    stopSequences: ["x"],
+    maxOutputTokens: 20,
+    temperature: 1.0,
+  },
+});
+
+const result = await model.generateContent(
+  "Tell me a story about a magic backpack.",
+);
+console.log(result.response.text());
+
+Function Calling:
+// Make sure to include these imports:
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+async function setLightValues(brightness, colorTemperature) {
+  // This mock API returns the requested lighting values
+  return {
+    brightness,
+    colorTemperature,
+  };
+}
+
+const controlLightFunctionDeclaration = {
+  name: "controlLight",
+  parameters: {
+    type: "OBJECT",
+    description: "Set the brightness and color temperature of a room light.",
+    properties: {
+      brightness: {
+        type: "NUMBER",
+        description:
+          "Light level from 0 to 100. Zero is off and 100 is full brightness.",
+      },
+      colorTemperature: {
+        type: "STRING",
+        description:
+          "Color temperature of the light fixture which can be `daylight`, `cool` or `warm`.",
+      },
+    },
+    required: ["brightness", "colorTemperature"],
+  },
+};
+
+// Executable function code. Put it in a map keyed by the function name
+// so that you can call it once you get the name string from the model.
+const functions = {
+  controlLight: ({ brightness, colorTemperature }) => {
+    return setLightValues(brightness, colorTemperature);
+  },
+};
+
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const model = genAI.getGenerativeModel({
+  model: "gemini-1.5-flash",
+  tools: { functionDeclarations: [controlLightFunctionDeclaration] },
+});
+const chat = model.startChat();
+const prompt = "Dim the lights so the room feels cozy and warm.";
+
+// Send the message to the model.
+const result = await chat.sendMessage(prompt);
+
+// For simplicity, this uses the first function call found.
+const call = result.response.functionCalls()[0];
+
+if (call) {
+  // Call the executable function named in the function call
+  // with the arguments specified in the function call and
+  // let it call the hypothetical API.
+  const apiResponse = await functions[call.name](call.args);
+
+  // Send the API response back to the model so it can generate
+  // a text response that can be displayed to the user.
+  const result2 = await chat.sendMessage([
+    {
+      functionResponse: {
+        name: "controlLight",
+        response: apiResponse,
+      },
+    },
+  ]);
+
+  // Log the text response.
+  console.log(result2.response.text());
+}
+
+codeExecution:
+
+from google import genai
+from google.genai import types
+
+client = genai.Client()
+response = client.models.generate_content(
+    model="gemini-2.0-pro-exp-02-05",
+    contents=(
+        "Write and execute code that calculates the sum of the first 50 prime numbers. "
+        "Ensure that only the executable code and its resulting output are generated."
+    ),
+)
+# Each part may contain text, executable code, or an execution result.
+for part in response.candidates[0].content.parts:
+    print(part, "\n")
+
+print("-" * 80)
+# The .text accessor concatenates the parts into a markdown-formatted text.
+print("\n", response.text)
+

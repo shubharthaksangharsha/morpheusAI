@@ -1,0 +1,187 @@
+Method: models.streamGenerateContent
+Generates a streamed response from the model given an input GenerateContentRequest.
+Endpoint
+POST
+https://generativelanguage.googleapis.com/v1beta/{model=models/*}:streamGenerateContent
+
+
+Example request
+
+Text
+// Make sure to include these imports:
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+const prompt = "Write a story about a magic backpack.";
+
+const result = await model.generateContentStream(prompt);
+
+// Print text as it comes in.
+for await (const chunk of result.stream) {
+  const chunkText = chunk.text();
+  process.stdout.write(chunkText);
+}
+
+
+Image
+
+// Make sure to include these imports:
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+function fileToGenerativePart(path, mimeType) {
+  return {
+    inlineData: {
+      data: Buffer.from(fs.readFileSync(path)).toString("base64"),
+      mimeType,
+    },
+  };
+}
+
+const prompt = "Describe how this product might be manufactured.";
+// Note: The only accepted mime types are some image types, image/*.
+const imagePart = fileToGenerativePart(
+  `${mediaPath}/jetpack.jpg`,
+  "image/jpeg",
+);
+
+const result = await model.generateContentStream([prompt, imagePart]);
+
+// Print text as it comes in.
+for await (const chunk of result.stream) {
+  const chunkText = chunk.text();
+  process.stdout.write(chunkText);
+}
+
+Audio
+
+from google import genai
+
+client = genai.Client()
+sample_audio = client.files.upload(file=media / "sample.mp3")
+response = client.models.generate_content_stream(
+    model="gemini-2.0-flash",
+    contents=["Give me a summary of this audio file.", sample_audio],
+)
+for chunk in response:
+    print(chunk.text)
+    print("_" * 80)
+
+
+Video
+
+// Make sure to include these imports:
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+// import { GoogleAIFileManager, FileState } from "@google/generative-ai/server";
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+const fileManager = new GoogleAIFileManager(process.env.API_KEY);
+
+const uploadResult = await fileManager.uploadFile(
+  `${mediaPath}/Big_Buck_Bunny.mp4`,
+  { mimeType: "video/mp4" },
+);
+
+let file = await fileManager.getFile(uploadResult.file.name);
+while (file.state === FileState.PROCESSING) {
+  process.stdout.write(".");
+  // Sleep for 10 seconds
+  await new Promise((resolve) => setTimeout(resolve, 10_000));
+  // Fetch the file from the API again
+  file = await fileManager.getFile(uploadResult.file.name);
+}
+
+if (file.state === FileState.FAILED) {
+  throw new Error("Video processing failed.");
+}
+
+const prompt = "Describe this video clip";
+const videoPart = {
+  fileData: {
+    fileUri: uploadResult.file.uri,
+    mimeType: uploadResult.file.mimeType,
+  },
+};
+
+const result = await model.generateContentStream([prompt, videoPart]);
+// Print text as it comes in.
+for await (const chunk of result.stream) {
+  const chunkText = chunk.text();
+  process.stdout.write(chunkText);
+}
+
+
+PDF
+
+
+from google import genai
+
+client = genai.Client()
+sample_pdf = client.files.upload(file=media / "test.pdf")
+response = client.models.generate_content_stream(
+    model="gemini-2.0-flash",
+    contents=["Give me a summary of this document:", sample_pdf],
+)
+
+for chunk in response:
+    print(chunk.text)
+    print("_" * 80)
+
+
+Chat
+
+// Make sure to include these imports:
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const chat = model.startChat({
+  history: [
+    {
+      role: "user",
+      parts: [{ text: "Hello" }],
+    },
+    {
+      role: "model",
+      parts: [{ text: "Great to meet you. What would you like to know?" }],
+    },
+  ],
+});
+let result = await chat.sendMessageStream("I have 2 dogs in my house.");
+for await (const chunk of result.stream) {
+  const chunkText = chunk.text();
+  process.stdout.write(chunkText);
+}
+result = await chat.sendMessageStream("How many paws are in my house?");
+for await (const chunk of result.stream) {
+  const chunkText = chunk.text();
+  process.stdout.write(chunkText);
+}
+// Make sure to include these imports:
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const chat = model.startChat({
+  history: [
+    {
+      role: "user",
+      parts: [{ text: "Hello" }],
+    },
+    {
+      role: "model",
+      parts: [{ text: "Great to meet you. What would you like to know?" }],
+    },
+  ],
+});
+let result = await chat.sendMessageStream("I have 2 dogs in my house.");
+for await (const chunk of result.stream) {
+  const chunkText = chunk.text();
+  process.stdout.write(chunkText);
+}
+result = await chat.sendMessageStream("How many paws are in my house?");
+for await (const chunk of result.stream) {
+  const chunkText = chunk.text();
+  process.stdout.write(chunkText);
+}
