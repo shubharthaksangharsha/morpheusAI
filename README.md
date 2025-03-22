@@ -2,6 +2,8 @@
 
 A versatile AI assistant platform with a modern interface and multiple integrated tools, all controlled by an intelligent agent.
 
+![Image](outputs/preview-morpheus.png)
+
 ## Project Overview
 
 Morpheus AI is a full-stack application that combines a sleek React frontend with a powerful backend to create an intuitive AI assistant experience. The platform features multiple specialized tools that the AI agent can control to assist users with various tasks.
@@ -30,8 +32,6 @@ The frontend is built with React, TypeScript, and Material-UI, providing a clean
   - Tool Selection
   - Content Preview
 - Responsive design with dark mode support
-
-For detailed information about the frontend, see the [Frontend README](frontend/README.md).
 
 ## Backend (In Progress)
 
