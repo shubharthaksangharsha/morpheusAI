@@ -60,8 +60,8 @@ console.log(fibSequence);`,
   {
     id: 'image-1',
     type: 'image' as const,
-    title: 'Generated Architecture Diagram',
-    content: 'https://via.placeholder.com/800x600/eee?text=AI+Generated+Architecture+Diagram',
+    title: 'Generated Image',
+    content: '/assets/morpheus-icon.jpg',
     createdAt: new Date(Date.now() - 1000 * 60 * 5) // 5 minutes ago
   },
 ];
